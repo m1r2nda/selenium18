@@ -90,6 +90,22 @@ namespace Selenium18Tests
 			}
 		}
 
+		[Test]
+		public void HomePage_EachProduct_HasOnlyOneSticker()
+		{
+			//Переходм на главную страницу
+			webDriver.Navigate().GoToUrl("http://localhost:81/litecart");
+			wait.Until(webDriver => webDriver.Title.Equals("Online Store | My Store"));
+
+			//Находим все товары на странице и проверяем, что у каждого товара ровно 1 стикер
+			var products = webDriver.FindElements(By.CssSelector("li.product"));
+			foreach (var product in products)
+			{
+				var stickersCount = product.FindElements(By.ClassName("sticker")).Count;
+				Assert.AreEqual(1, stickersCount, "У товара не один стикер");
+			}
+		}
+
 		private bool IsElementPresent(By locator)
 		{
 			return webDriver.FindElements(locator).Count > 0;
