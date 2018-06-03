@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using NUnit.Framework;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
@@ -104,6 +105,93 @@ namespace Selenium18Tests
 				var stickersCount = product.FindElements(By.ClassName("sticker")).Count;
 				Assert.AreEqual(1, stickersCount, "У товара не один стикер");
 			}
+		}
+
+		[Test]
+		public void AdminPage_Countries_AreInAlphabeticalOrder()
+		{
+			//Переходим на страницу логина в админку
+			webDriver.Navigate().GoToUrl("http://localhost:81/litecart/admin/");
+			wait.Until(webDriver => webDriver.Title.Equals("My Store"));
+
+			//Авторизуемся в админке
+			webDriver.FindElement(By.XPath("//input[@name='username']")).SendKeys("admin");
+			webDriver.FindElement(By.XPath("//input[@name='password']")).SendKeys("admin");
+			webDriver.FindElement(By.XPath("//button[@name='login']")).Click();
+			
+			//Переходим на страницу стран
+			webDriver.Navigate().GoToUrl("http://localhost:81/litecart/admin/?app=countries&doc=countries");
+			wait.Until(webDriver => webDriver.Title.Equals("Countries | My Store"));
+
+			//Проверяем, что список стран расположен в алфавитном порядке
+			var countries = webDriver.FindElements(By.CssSelector("tr.row a:not([title=Edit])"));
+			for (var i = 0; i < countries.Count-1; i++)
+			{
+				Assert.IsTrue(String.CompareOrdinal(countries[i].Text, countries[i+1].Text) <=0, "В списке стран не соблюдается алфавитный порядок");
+			}
+
+		}
+
+		[Test]
+		public void AdminPage_ZonesOfCountries_AreInAlphabeticalOrder()
+		{
+			//Переходим на страницу логина в админку
+			webDriver.Navigate().GoToUrl("http://localhost:81/litecart/admin/");
+			wait.Until(webDriver => webDriver.Title.Equals("My Store"));
+
+			//Авторизуемся в админке
+			webDriver.FindElement(By.XPath("//input[@name='username']")).SendKeys("admin");
+			webDriver.FindElement(By.XPath("//input[@name='password']")).SendKeys("admin");
+			webDriver.FindElement(By.XPath("//button[@name='login']")).Click();
+
+			//Переходим на страницу стран
+			webDriver.Navigate().GoToUrl("http://localhost:81/litecart/admin/?app=countries&doc=countries");
+			wait.Until(webDriver => webDriver.Title.Equals("Countries | My Store"));
+
+			//Переходим только к тем странам, у которых кол-во зон не равно нулю
+			var countriesUrls = webDriver.FindElements(By.XPath("//tr[contains(@class,'row')]//td[6][not(contains(.,0))]/../*/a[@title='Edit']")).Select(e => e.GetAttribute("href")).ToList();
+			foreach (var url in countriesUrls)
+			{
+				webDriver.Navigate().GoToUrl(url);
+				//Проверяем, что список зон расположен в алфавитном порядке
+				var zones = webDriver.FindElements(By.XPath("//*[@id='table-zones']//input[contains(@name,'name') and not(@value='')]/.."));
+				for (var i = 0; i < zones.Count - 1; i++)
+				{
+					Assert.IsTrue(String.CompareOrdinal(zones[i].Text, zones[i + 1].Text) <= 0, "В списке зон не соблюдается алфавитный порядок");
+				}
+			}
+
+		}
+
+		[Test]
+		public void AdminPage_GeoZonesOfCountries_AreInAlphabeticalOrder()
+		{
+			//Переходим на страницу логина в админку
+			webDriver.Navigate().GoToUrl("http://localhost:81/litecart/admin/");
+			wait.Until(webDriver => webDriver.Title.Equals("My Store"));
+
+			//Авторизуемся в админке
+			webDriver.FindElement(By.XPath("//input[@name='username']")).SendKeys("admin");
+			webDriver.FindElement(By.XPath("//input[@name='password']")).SendKeys("admin");
+			webDriver.FindElement(By.XPath("//button[@name='login']")).Click();
+
+			//Переходим на страницу гео зон
+			webDriver.Navigate().GoToUrl("http://localhost:81/litecart/admin/?app=geo_zones&doc=geo_zones");
+			wait.Until(webDriver => webDriver.Title.Equals("Geo Zones | My Store"));
+
+			//Переходим к каждой стране
+			var countriesUrls = webDriver.FindElements(By.XPath("//table//a[@title='Edit']")).Select(e => e.GetAttribute("href")).ToList();
+			foreach (var url in countriesUrls)
+			{
+				webDriver.Navigate().GoToUrl(url);
+				//Проверяем, что список зон расположен в алфавитном порядке
+				var zones = webDriver.FindElements(By.XPath("//*[@id='table-zones']//select[contains(@name,'zone_code')]/option[@selected]"));
+				for (var i = 0; i < zones.Count - 1; i++)
+				{
+					Assert.IsTrue(String.CompareOrdinal(zones[i].Text, zones[i + 1].Text) <= 0, "В списке зон не соблюдается алфавитный порядок");
+				}
+			}
+
 		}
 
 		private bool IsElementPresent(By locator)
