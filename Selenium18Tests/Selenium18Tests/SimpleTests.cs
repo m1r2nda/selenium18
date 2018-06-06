@@ -241,6 +241,44 @@ namespace Selenium18Tests
 			}
 		}
 
+		[Test]
+		public void Registration_CreateAccount_Success()
+		{
+			//Переходим на страницу создания аккаунта в админку
+			webDriver.Navigate().GoToUrl("http://localhost:81/litecart/create_account");
+			wait.Until(webDriver => webDriver.Title.Equals("Create Account | My Store"));
+
+			//Заполняем все необходимые поля для регистарции
+			var email = $"{Guid.NewGuid()}@user.ru";
+			var password = "password";
+			webDriver.FindElement(By.Name("firstname")).SendKeys("firstname");
+			webDriver.FindElement(By.Name("lastname")).SendKeys("lastname");
+			webDriver.FindElement(By.Name("address1")).SendKeys("address1");
+			webDriver.FindElement(By.Name("postcode")).SendKeys("12345");
+			webDriver.FindElement(By.Name("city")).SendKeys("city");
+			new SelectElement(webDriver.FindElement(By.Name("country_code"))).SelectByText("United States");
+			webDriver.FindElement(By.Name("phone")).SendKeys("+19033870573");
+			webDriver.FindElement(By.Name("email")).SendKeys(email);
+			webDriver.FindElement(By.Name("password")).SendKeys(password);
+			webDriver.FindElement(By.Name("confirmed_password")).SendKeys(password);
+			webDriver.FindElement(By.Name("create_account")).Click();
+
+			//После регистрации переходим на главную автоматически, просто ждем этого
+			wait.Until(webDriver => webDriver.Title.Equals("Online Store | My Store"));
+
+			//Разлогиниваемся
+			var logoutLocator = By.XPath("(//a[.='Logout'])[1]");
+			webDriver.FindElement(logoutLocator).Click();
+
+			//Повторный вход в только что созданную учетную запись
+			webDriver.FindElement(By.Name("email")).SendKeys(email);
+			webDriver.FindElement(By.Name("password")).SendKeys(password);
+			webDriver.FindElement(By.Name("login")).Click();
+
+			//И еще раз разлогиниваемся
+			webDriver.FindElement(logoutLocator).Click();
+		}
+
 		private bool IsElementPresent(By locator)
 		{
 			return webDriver.FindElements(locator).Count > 0;
