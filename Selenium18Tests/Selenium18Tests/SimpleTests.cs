@@ -212,6 +212,75 @@ namespace Selenium18Tests
 		}
 
 		[Test]
+		public void AdminPage_AddNewProduct_Success()
+		{
+			//Переходим на страницу логина в админку
+			webDriver.Navigate().GoToUrl("http://localhost:81/litecart/admin/");
+			wait.Until(webDriver => webDriver.Title.Equals("My Store"));
+
+			//Авторизуемся в админке
+			webDriver.FindElement(By.XPath("//input[@name='username']")).SendKeys("admin");
+			webDriver.FindElement(By.XPath("//input[@name='password']")).SendKeys("admin");
+			webDriver.FindElement(By.XPath("//button[@name='login']")).Click();
+
+			//Переходим на вкладку Catalog
+			webDriver.Navigate().GoToUrl("http://localhost:81/litecart/admin/?app=catalog&doc=catalog");
+			wait.Until(webDriver => webDriver.Title.Equals("Catalog | My Store"));
+
+			//Нажимаем "Add New Product" 
+			//Заполняем данные о товаре на вкладке General
+			webDriver.FindElement(By.XPath("//*[@id='content']//a[contains(.,'Add New Product')]")).Click();
+			webDriver.FindElement(By.XPath("//*[@id='tab-general']//*[@name='status'][@value='1']")).Click();
+			var productName = Guid.NewGuid().ToString();
+			webDriver.FindElement(By.XPath("//*[@id='tab-general']//*[@name='name[en]']")).SendKeys(productName);
+			webDriver.FindElement(By.XPath("//*[@id='tab-general']//*[@name='code']")).SendKeys("code");
+			webDriver.FindElement(By.XPath("//*[@id='tab-general']//input[@name='product_groups[]'][@value='1-3']")).Click();
+			webDriver.FindElement(By.XPath("//*[@id='tab-general']//*[@name='quantity']")).Clear();
+			webDriver.FindElement(By.XPath("//*[@id='tab-general']//*[@name='quantity']")).SendKeys("10");
+			webDriver.FindElement(By.XPath("//*[@id='tab-general']//*[@name='new_images[]']")).SendKeys($"{TestContext.CurrentContext.TestDirectory}\\new-product.png");
+			webDriver.FindElement(By.XPath("//*[@id='tab-general']//*[@name='date_valid_from']")).SendKeys(DateTime.Today.ToString("dd.MM.yyyy"));
+			webDriver.FindElement(By.XPath("//*[@id='tab-general']//*[@name='date_valid_to']")).SendKeys(DateTime.Today.AddDays(7).ToString("dd.MM.yyyy"));
+
+			//Переключаемся на вкладку Information
+			webDriver.FindElement(By.XPath("//*[@id='content']//a[@href='#tab-information']")).Click();
+			wait.Until(ExpectedConditions.ElementIsVisible(By.XPath("//*[@id='tab-information']//select[@name='manufacturer_id']")));
+
+			//Заполняем данные о товаре на вкладке Information
+			new SelectElement(webDriver.FindElement(By.Name("manufacturer_id"))).SelectByIndex(1);
+			webDriver.FindElement(By.Name("keywords")).SendKeys("keywords");
+			webDriver.FindElement(By.Name("short_description[en]")).SendKeys("short_description[en]");
+			webDriver.FindElement(By.XPath("//*[@class='trumbowyg-editor']")).SendKeys("description");
+			webDriver.FindElement(By.Name("head_title[en]")).SendKeys("head_title[en]");
+			webDriver.FindElement(By.Name("meta_description[en]")).SendKeys("meta_description[en]");
+
+			//Переключаемся на вкладку Prices
+			webDriver.FindElement(By.XPath("//*[@id='content']//a[@href='#tab-prices']")).Click();
+			wait.Until(ExpectedConditions.ElementIsVisible(By.Name("purchase_price")));
+
+			//Заполняем данные о товаре на вкладке Prices
+			webDriver.FindElement(By.Name("purchase_price")).Clear();
+			webDriver.FindElement(By.Name("purchase_price")).SendKeys("20");
+			new SelectElement(webDriver.FindElement(By.Name("purchase_price_currency_code"))).SelectByValue("USD");
+			webDriver.FindElement(By.Name("prices[USD]")).Clear();
+			webDriver.FindElement(By.Name("prices[USD]")).SendKeys("20");
+			webDriver.FindElement(By.Name("gross_prices[USD]")).Clear();
+			webDriver.FindElement(By.Name("gross_prices[USD]")).SendKeys("20");
+			webDriver.FindElement(By.Name("prices[EUR]")).Clear();
+			webDriver.FindElement(By.Name("prices[EUR]")).SendKeys("20");
+			webDriver.FindElement(By.Name("gross_prices[EUR]")).Clear();
+			webDriver.FindElement(By.Name("gross_prices[EUR]")).SendKeys("20");
+
+			//Сохраняем
+			webDriver.FindElement(By.Name("save")).Click();
+
+			//Проверяем, что товар появился в каталоге (админке)
+			//Переходим на вкладку Catalog
+			webDriver.Navigate().GoToUrl("http://localhost:81/litecart/admin/?app=catalog&doc=catalog");
+			wait.Until(webDriver => webDriver.Title.Equals("Catalog | My Store"));
+			Assert.IsTrue(webDriver.FindElement(By.XPath($"//*[@id='content']//a[.='{productName}']")).Displayed, "Новый товар не появился в каталоге после создания");
+		}
+
+		[Test]
 		public void AdminPage_GeoZonesOfCountries_AreInAlphabeticalOrder()
 		{
 			//Переходим на страницу логина в админку
