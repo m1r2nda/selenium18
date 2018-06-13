@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.Linq;
 using NUnit.Framework;
 using OpenQA.Selenium;
@@ -209,6 +210,52 @@ namespace Selenium18Tests
 					Assert.IsTrue(String.CompareOrdinal(zones[i].Text, zones[i + 1].Text) <= 0, "В списке зон не соблюдается алфавитный порядок");
 				}
 			}
+		}
+
+		[Test]
+		public void AdminPage_EditCountry_WasOpenedInNewWindow()
+		{
+			//Переходим на страницу логина в админку
+			webDriver.Navigate().GoToUrl("http://localhost:81/litecart/admin/");
+			wait.Until(webDriver => webDriver.Title.Equals("My Store"));
+
+			//Авторизуемся в админке
+			webDriver.FindElement(By.XPath("//input[@name='username']")).SendKeys("admin");
+			webDriver.FindElement(By.XPath("//input[@name='password']")).SendKeys("admin");
+			webDriver.FindElement(By.XPath("//button[@name='login']")).Click();
+
+			//Переходим на страницу добавления страны на вкладке Countries
+			webDriver.Navigate().GoToUrl("http://localhost:81/litecart/admin/?app=countries&doc=edit_country");
+			wait.Until(webDriver => webDriver.Title.Equals("Add New Country | My Store"));
+
+			//Прокликиваем все ссылки на внешние источники
+			var itemsCount = webDriver.FindElements(By.XPath("//*[contains(@class,'fa-external-link')]/..")).Count;
+			for (var j = 0; j < itemsCount; j++)
+			{
+				var oldWindowsCount = webDriver.WindowHandles.Count;
+				var oldWindows = webDriver.WindowHandles;
+				var mainWindow = webDriver.CurrentWindowHandle;
+
+				webDriver.FindElements(By.XPath("//*[contains(@class,'fa-external-link')]/.."))[j].Click();
+
+				//ASSERT
+				var newWindow = wait.Until(AnyWindowOtherThan(oldWindows));
+				Assert.AreEqual(oldWindowsCount+1, webDriver.WindowHandles.Count, "Не открылась ссылка в новом окне");
+
+				//Закрываем окно и возвращаемся назад
+				webDriver.SwitchTo().Window(newWindow).Close();
+				webDriver.SwitchTo().Window(mainWindow);
+			}
+		}
+
+		private Func<IWebDriver, string> AnyWindowOtherThan(ReadOnlyCollection<string> oldWindows)
+		{
+			return webDriver =>
+			{
+				var windowsHandles = webDriver.WindowHandles;
+				var newWindows = windowsHandles.Except(oldWindows);
+				return newWindows.Any() ? newWindows.FirstOrDefault() : string.Empty;
+			};
 		}
 
 		[Test]
