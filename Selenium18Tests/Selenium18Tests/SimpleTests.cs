@@ -213,6 +213,36 @@ namespace Selenium18Tests
 		}
 
 		[Test]
+		public void AdminPage_OpenProduct_Success()
+		{
+			//Переходим на страницу логина в админку
+			webDriver.Navigate().GoToUrl("http://localhost:81/litecart/admin/");
+			wait.Until(webDriver => webDriver.Title.Equals("My Store"));
+
+			//Авторизуемся в админке
+			webDriver.FindElement(By.XPath("//input[@name='username']")).SendKeys("admin");
+			webDriver.FindElement(By.XPath("//input[@name='password']")).SendKeys("admin");
+			webDriver.FindElement(By.XPath("//button[@name='login']")).Click();
+
+			//Переходим на страницу Catalog
+			webDriver.Navigate().GoToUrl("http://localhost:81/litecart/admin/?app=catalog&doc=catalog&category_id=1");
+			wait.Until(webDriver => webDriver.Title.Equals("Catalog | My Store"));
+			
+			//Прокликиваем все ссылки с товарами
+			var itemsCount = webDriver.FindElements(By.XPath("//td/a[contains(@href,'category_id=1')][not(contains(@title,'Edit'))]")).Count;
+			for (var j = 0; j < itemsCount; j++)
+			{
+				webDriver.FindElements(By.XPath("//td/a[contains(@href,'category_id=1')][not(contains(@title,'Edit'))]"))[j].Click();
+
+				Assert.IsFalse(webDriver.Manage().Logs.GetLog("browser").Any(), "В логах браузера присутствуют ошибки");
+				
+				//Переходим на страницу Catalog
+				webDriver.Navigate().GoToUrl("http://localhost:81/litecart/admin/?app=catalog&doc=catalog&category_id=1");
+				wait.Until(webDriver => webDriver.Title.Equals("Catalog | My Store"));
+			}
+		}
+
+		[Test]
 		public void AdminPage_EditCountry_WasOpenedInNewWindow()
 		{
 			//Переходим на страницу логина в админку
