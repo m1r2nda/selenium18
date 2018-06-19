@@ -3,33 +3,14 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using NUnit.Framework;
 using OpenQA.Selenium;
-using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Support.UI;
+using Selenium18Tests.Pages.Product;
 
 namespace Selenium18Tests
 {
 	[TestFixture]
-	public class SimpleTests
+	public class SimpleTests : TestBase
 	{
-		private IWebDriver webDriver;
-		private WebDriverWait wait;
-
-		[SetUp]
-		public void SetUp()
-		{
-			webDriver = new ChromeDriver();
-
-			wait = new WebDriverWait(webDriver, TimeSpan.FromSeconds(10));
-		}
-
-		[TearDown]
-		public void TearDown()
-		{
-			webDriver.Close();
-			webDriver.Quit();
-			webDriver = null;
-		}
-
 		[Test]
 		public void Google_GoToSearchPage_Success()
 		{
@@ -428,46 +409,21 @@ namespace Selenium18Tests
 		[Test]
 		public void HomePage_AddProductToCart_Success()
 		{
-			for (int i = 0; i < 3; i++)
-			{
-				//Переходим на главную страницу
-				webDriver.Navigate().GoToUrl("http://localhost:81/litecart");
-				wait.Until(webDriver => webDriver.Title.Equals("Online Store | My Store"));
-
-				//Открываем первый продукт из списка (например, это список Latest Products)
-				webDriver.FindElement(By.XPath("(//*[@id='box-latest-products']//li[contains(@class,'product')])[1]")).Click();
-				wait.Until(webDriver => !webDriver.Title.Equals("Online Store | My Store"));
-				var quantityOld = webDriver.FindElement(By.XPath("//*[@id='cart']//*[@class='quantity']")).Text;
-				webDriver.FindElement(By.Name("add_cart_product")).Click();
-				wait.Until(webDriver => !webDriver.FindElement(By.XPath("//*[@id='cart']//*[@class='quantity']")).Text.Equals(quantityOld));
-			}
-
+			AddProductsToCart(3);
+			
 			//Переходим в корзину
-			webDriver.FindElement(By.XPath("//*[@id='cart']//a[@class='link']")).Click();
-			wait.Until(webDriver => webDriver.Title.Equals("Checkout | My Store"));
+			var mainPage = GoToMainPage();
+			var cartPage = mainPage.GoToCart();
 
-			//Поштучно удаляем два товара путем уменьшения их кол-ва. Предполагаем, что сейчас в корзине 3 единицы одного и того же товара
-			for (var i = 3; i > 1; i--)
-			{
-				var productCount = webDriver.FindElement(By.XPath($"//*[@id='order_confirmation-wrapper']//tr[2]/td[1]"));
-				
-				//удаляем
-				webDriver.FindElement(By.XPath("//*[@id='box-checkout-cart']//*[@name='quantity']")).Clear();
-				webDriver.FindElement(By.XPath("//*[@id='box-checkout-cart']//*[@name='quantity']")).SendKeys($"{i-1}");
-				webDriver.FindElement(By.XPath("//*[@id='box-checkout-cart']//*[@name='update_cart_item']")).Click();
-				wait.Until(webDriver => ExpectedConditions.StalenessOf(productCount));
-			}
+			//Поштучно удаляем два товара путем уменьшения их кол-ва.
+			//Предполагаем, что сейчас в корзине 3 единицы одного и того же товара
+			cartPage.RemoveByOne(2);
 
 			//удаляем последний третий товар
-			wait.Until(ExpectedConditions.TextToBePresentInElementLocated(By.XPath($"//*[@id='order_confirmation-wrapper']//tr[2]/td[1]"),"1"));
-			var updateButtonElement = webDriver.FindElement(By.XPath("//*[@id='box-checkout-cart']//*[@name='update_cart_item']"));
-			webDriver.FindElement(By.XPath("//*[@id='box-checkout-cart']//*[@name='quantity']")).Clear();
-			webDriver.FindElement(By.XPath("//*[@id='box-checkout-cart']//*[@name='quantity']")).SendKeys("0");
-			webDriver.FindElement(By.XPath("//*[@id='box-checkout-cart']//*[@name='update_cart_item']")).Click();
-
-			wait.Until(webDriver => ExpectedConditions.StalenessOf(updateButtonElement));
-			wait.Until(webDriver => ExpectedConditions.VisibilityOfAllElementsLocatedBy(By.XPath("//*[@id='checkout-cart-wrapper']//*[.='There are no items in your cart.']")));
+			cartPage.RemoveLastProduct();
 		}
+
+
 
 		private bool IsElementPresent(By locator)
 		{
