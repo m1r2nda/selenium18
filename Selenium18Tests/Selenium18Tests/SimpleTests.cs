@@ -4,7 +4,6 @@ using System.Linq;
 using NUnit.Framework;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
-using Selenium18Tests.Pages.Product;
 
 namespace Selenium18Tests
 {
